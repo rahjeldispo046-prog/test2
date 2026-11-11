@@ -28,10 +28,25 @@ CREATE TABLE IF NOT EXISTS archives (
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
+-- Seed the exact supported categories. Existing records are reassigned before
+-- legacy categories are removed, so re-importing this schema preserves archives.
 INSERT IGNORE INTO categories (category_name) VALUES
-    ('Administrative'),
-    ('Financial'),
-    ('Human Resources'),
-    ('Legal'),
-    ('Reports'),
-    ('Other');
+    ('Documents'),
+    ('Photos'),
+    ('Reports');
+
+-- Keep obvious report records in Reports; archive other legacy categories under
+-- Documents. Existing records already in Photos remain assigned there.
+UPDATE archives AS a
+INNER JOIN categories AS old_category ON old_category.category_id = a.category_id
+INNER JOIN categories AS new_category
+    ON new_category.category_name = CASE
+        WHEN old_category.category_name = 'Reports' THEN 'Reports'
+        WHEN old_category.category_name = 'Photos' THEN 'Photos'
+        ELSE 'Documents'
+    END
+SET a.category_id = new_category.category_id
+WHERE old_category.category_name NOT IN ('Documents', 'Photos', 'Reports');
+
+DELETE FROM categories
+WHERE category_name NOT IN ('Documents', 'Photos', 'Reports');

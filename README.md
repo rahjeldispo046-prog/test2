@@ -6,7 +6,7 @@ A complete capstone archive application built for **PHP 8+ and MySQL/MariaDB on 
 
 1. Copy/clone this repository into `C:\xampp\htdocs\test2` (Windows) or `htdocs/test2` in your XAMPP installation.
 2. Start **Apache** and **MySQL** in the XAMPP Control Panel.
-3. Open `http://localhost/phpmyadmin`, choose **Import**, select this repository's `schema.sql`, and run the import. The script creates the `archive_app` database and its tables and starter categories.
+3. Open `http://localhost/phpmyadmin`, choose **Import**, select this repository's `schema.sql`, and run the import. The script creates the `archive_app` database and its tables, the three supported categories (**Documents**, **Photos**, and **Reports**), and migrates existing archive records away from legacy categories while preserving them.
 4. Check `config/database.php`. The defaults match a typical XAMPP install: host `127.0.0.1`, database `archive_app`, user `root`, and an empty password.
 5. Ensure PHP's `fileinfo` extension is enabled and `uploads/` is writable by Apache. Open `http://localhost/test2/`.
 
@@ -14,7 +14,7 @@ The PHP upload limit must accommodate 20 MB files. If necessary, adjust `upload_
 
 ## Features
 
-- Add an archive record with a document title, category, and file. Accepted formats: PDF, DOC/DOCX, XLS/XLSX, PPT/PPTX, TXT, CSV, JPG, and PNG.
+- Add an archive record with a document title, one of the three categories (**Documents**, **Photos**, **Reports**), and a file. Accepted formats: PDF, DOC/DOCX, XLS/XLSX, PPT/PPTX, TXT, CSV, JPG, and PNG.
 - Download files using their archive record; stored names are generated randomly, and the original filename is retained for downloads.
 - View, edit, and delete records. Editing metadata can leave the existing file in place or replace it. Deleting a record also removes its stored file.
 - Search titles, categories, and original filenames; filter by category; sort by title, category, oldest first, or file size.
@@ -26,13 +26,9 @@ The application retrieves the archive records and category names from MySQL, the
 
 ## Database and code layout
 
-- `schema.sql` — database, normalized `categories` and `archives` tables, key/foreign-key constraint, and starter categories.
+- `schema.sql` — database, normalized `categories` and `archives` tables, key/foreign-key constraint, three supported categories, and migration from legacy category rows.
 - `config/database.php` — PDO connection (XAMPP defaults; environment variables may override settings).
 - `includes/functions.php` — escaping, CSRF, upload/path helpers, in-memory filtering, and merge sort.
 - `index.php` — archive listing, search/sort/filter, and create/read/update/delete user interface.
 - `download.php` — validated file download endpoint.
-- `uploads/files/` — private-by-convention storage location for uploaded documents.
-
-## Notes
-
-Create category rows in phpMyAdmin if additional categories are needed. Do not expose the `uploads/` directory through a separate web server or move uploaded files outside it. Production deployments should configure a dedicated least-privilege MySQL account, HTTPS, backup/retention policies, and server-level upload limits.
+- `uploads/files/` — storage location for uploaded documents.

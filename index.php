@@ -21,10 +21,10 @@ if (isset($pdo) && $_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($title === '' || strlen($title) > 200 || !$categoryId) {
                 throw new RuntimeException('Enter a title (up to 200 characters) and choose a category.');
             }
-            $checkCategory = $pdo->prepare('SELECT category_id FROM categories WHERE category_id = ?');
+            $checkCategory = $pdo->prepare("SELECT category_id FROM categories WHERE category_id = ? AND category_name IN ('Documents', 'Photos', 'Reports')");
             $checkCategory->execute([$categoryId]);
             if (!$checkCategory->fetch()) {
-                throw new RuntimeException('Select a valid category.');
+                throw new RuntimeException('Select one of the available categories: Documents, Photos, or Reports.');
             }
 
             $newFile = null;
@@ -106,8 +106,8 @@ if (!in_array($sort, ['title', 'category', 'oldest', 'size'], true)) {
     $sort = 'title';
 }
 if (isset($pdo)) {
-    $categories = $pdo->query('SELECT category_id, category_name FROM categories ORDER BY category_name')->fetchAll();
-    $records = $pdo->query('SELECT a.archive_id, a.title, a.file_path, a.original_file_name, a.file_size_kb, a.category_id, a.created_at, c.category_name FROM archives a INNER JOIN categories c ON c.category_id = a.category_id')->fetchAll();
+    $categories = $pdo->query("SELECT category_id, category_name FROM categories WHERE category_name IN ('Documents', 'Photos', 'Reports') ORDER BY FIELD(category_name, 'Documents', 'Photos', 'Reports')")->fetchAll();
+    $records = $pdo->query("SELECT a.archive_id, a.title, a.file_path, a.original_file_name, a.file_size_kb, a.category_id, a.created_at, c.category_name FROM archives a INNER JOIN categories c ON c.category_id = a.category_id WHERE c.category_name IN ('Documents', 'Photos', 'Reports')")->fetchAll();
     $records = filter_archives($records, $search, $categoryFilter);
     $records = merge_sort_archives($records, $sort);
     if (isset($_GET['edit'])) {
